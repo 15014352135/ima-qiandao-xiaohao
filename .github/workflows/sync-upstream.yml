@@ -1,0 +1,32 @@
+name: Sync Upstream
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 17 * * *'   # UTC 17:23 = 北京次日 01:23，每天自动同步一次
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT }}
+          fetch-depth: 0
+
+      - name: Sync with upstream
+        env:
+          PAT: ${{ secrets.PAT }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/LeapYa/ima-qiandao.git || git remote set-url upstream https://github.com/LeapYa/ima-qiandao.git
+          git fetch upstream
+          git remote set-head upstream --auto
+          UPSTREAM_BRANCH=$(git rev-parse --abbrev-ref upstream/HEAD | sed 's#upstream/##')
+          echo "Upstream default branch: $UPSTREAM_BRANCH"
+          # -X ours: 冲突时保留你本地的修改，仅把上游新增内容合并进来
+          git merge upstream/$UPSTREAM_BRANCH --no-edit -X ours && \
+            git push https://x-access-token:${PAT}@github.com/15014352135/ima-qiandao-xiaohao.git $UPSTREAM_BRANCH || \
+            (echo "Merge failed/conflict, keeping local changes. Resolve manually if needed."; git merge --abort || true; exit 0)
