@@ -27,6 +27,7 @@ jobs:
           UPSTREAM_BRANCH=$(git rev-parse --abbrev-ref upstream/HEAD | sed 's#upstream/##')
           echo "Upstream default branch: $UPSTREAM_BRANCH"
           # -X ours: 冲突时保留你本地的修改，仅把上游新增内容合并进来
-          git merge upstream/$UPSTREAM_BRANCH --no-edit -X ours && \
+          # --allow-unrelated-histories: 首次同步两仓库无共同历史时也能合并
+          git merge upstream/$UPSTREAM_BRANCH --no-edit -X ours --allow-unrelated-histories && \
             git push https://x-access-token:${PAT}@github.com/15014352135/ima-qiandao-xiaohao.git $UPSTREAM_BRANCH || \
             (echo "Merge failed/conflict, keeping local changes. Resolve manually if needed."; git merge --abort || true; exit 0)
